@@ -1,0 +1,2 @@
+//intern.go
+package main
