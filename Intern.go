@@ -2,11 +2,7 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mitchellh/mapstructure"
@@ -29,21 +25,6 @@ type covid_case struct {
 
 var covid_cases []covid_case
 
-func readJSON(filename string, receiver *interface{}) {
-	jsonFile, err := os.Open(filename)
-	if err != nil {
-		fmt.Println("ERROR: cannot open JSON file")
-		return
-	} else {
-		fmt.Println("ALERT: open JSON file successfully")
-	}
-	defer jsonFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	json.Unmarshal([]byte(byteValue), receiver)
-}
-
 func mapDecode(m interface{}, target *[]covid_case) {
 	for _, j := range m.([]interface{}) {
 		var result covid_case
@@ -52,7 +33,7 @@ func mapDecode(m interface{}, target *[]covid_case) {
 	}
 }
 
-func getSummary(c *gin.Context) {
+func GetSummary(c *gin.Context) {
 	Province, AgeGroup := make(map[string]int), make(map[string]int)
 
 	for _, Case := range covid_cases {
@@ -99,7 +80,7 @@ func main() {
 	mapDecode(Data, &covid_cases)
 
 	router := gin.Default()
-	router.GET("covid/summary", getSummary)
+	router.GET("covid/summary", GetSummary)
 
 	router.Run("localhost:8080")
 }
