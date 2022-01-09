@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,42 @@ func mapDecode(m interface{}, target *[]covid_case) {
 	}
 }
 
+func getSummary(c *gin.Context) {
+	Province, AgeGroup := make(map[string]int), make(map[string]int)
+
+	for _, Case := range covid_cases {
+		p := Case.ProvinceEn
+		a := Case.Age
+
+		_, exist := Province[p]
+		if exist {
+			Province[p]++
+		} else {
+			Province[p] = 1
+		}
+
+		switch {
+		case a == 0:
+			AgeGroup["N/A"]++
+		case a <= 30:
+			AgeGroup["0-30"]++
+		case a <= 60:
+			AgeGroup["31-60"]++
+		default:
+			AgeGroup["61+"]++
+		}
+	}
+
+	Province["N/A"] = Province[""]
+	delete(Province, "")
+
+	summary := make(map[string](map[string]int))
+	summary["Province"] = Province
+	summary["AgeGroup"] = AgeGroup
+
+	c.IndentedJSON(http.StatusOK, summary)
+}
+
 func main() {
 	//read file to interface
 	var i interface{}
@@ -62,6 +99,7 @@ func main() {
 	mapDecode(Data, &covid_cases)
 
 	router := gin.Default()
+	router.GET("covid/summary", getSummary)
 
 	router.Run("localhost:8080")
 }
